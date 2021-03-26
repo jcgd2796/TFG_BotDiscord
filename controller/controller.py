@@ -9,6 +9,8 @@ dotenv.load_dotenv()
 url = os.getenv("URL")
 
 def validateLogin(login):
+    if(login == "!exit") or (login == "!Exit"):
+        return True
     response = requests.get(url+'/operators/?name='+login,
             auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
     if (response.status_code != 200):
@@ -19,6 +21,8 @@ def validateLogin(login):
         return True
 
 def validateTitle(title):
+    if(title == "!exit") or (title == "!Exit"):
+        return True
     return len(title) > 10
 
 def getCIs():
@@ -26,6 +30,8 @@ def getCIs():
     return response.json()
 
 def validateImpact(impact):
+    if(impact == "!exit") or (impact == "!Exit"):
+        return True
     return (int(impact) > 0 and int(impact) < 5) 
 
 def createIncident(operator,title,description,ci,impact,severity):

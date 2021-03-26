@@ -53,26 +53,27 @@ async def getOperator(channel):
     await channel.send("----------INCIDENT CREATION----------\n Enter your Service Manager Login: ")
     operator = await client.wait_for("message")
     while (operator.channel.id != channel.id) or (not (control.validateLogin(operator.content))) or (operator.author == client.user):
-        if(operator.channel.id == channel.id):
+        if(operator.channel.id == channel.id) and (operator.author != client.user):
             await channel.send("User not found, enter your Service Manager Login")
         operator = await client.wait_for("message")
-    print(control.validateLogin(operator.content))
     return operator.content
 
 
 async def getTitle(channel):
     await channel.send("Enter Incident title")
     title = await client.wait_for("message")
-    while(not control.validateTitle(title.content)):
-        await channel.send("Title not valid, enter Incident title")
+    while (title.channel.id != channel.id) or (not (control.validateTitle(title.content))) or (title.author == client.user):
+        if(title.channel.id == channel.id) and (title.author != client.user):
+            await channel.send("Title not valid, enter Incident title")
         title = await client.wait_for("message")
     return title.content
 
 async def getDescription(channel):
     await channel.send("Enter Incident description")
     description = await client.wait_for("message")
-    while(not control.validateTitle(description.content)):
-        await channel.send("Description not valid, try again")
+    while (description.channel.id != channel.id) or (not (control.validateTitle(description.content))) or (description.author == client.user):
+        if(description.channel.id == channel.id) and (description.author != client.user):
+            await channel.send("Description not valid, try again")
         description = await client.wait_for("message")
     return description.content
 
@@ -80,55 +81,71 @@ async def getCI(channel):
     await channel.send("Enter Affected CI ID. \n List of CIs")
     cis = control.getCIs()
     ids = list()
+    string = ""
     for ci in cis['content']:
-        await channel.send(ci)
+        string+= str(ci)+"\n"
         ids.append(ci['Device']['ConfigurationItem'])
+    await channel.send(string)
     ciId = await client.wait_for("message")
-    while(ciId.content not in ids):
-        await channel.send("CI id not valid, try again")
+    while (ciId.channel.id != channel.id) or (ciId.content not in ids) or (ciId.author == client.user):
+        if(ciId.channel.id == channel.id) and (ciId.author != client.user):
+            await channel.send("CI id not valid, try again")
         ciId = await client.wait_for("message")
     return ciId.content
 
 async def getImpact(channel):
     await channel.send("Enter Incident impact value (from 1-Highest to 4-Lowest)")
     impact = await client.wait_for("message")
-    while(not control.validateImpact(impact.content)):
-        await channel.send("Impact value not valid, try again")
+    while (impact.channel.id != channel.id) or (not (control.validateImpact(impact.content))) or (impact.author == client.user):
+        if(impact.channel.id == channel.id) and (impact.author != client.user):
+            await channel.send("Impact value not valid, try again")
         impact = await client.wait_for("message")
     return impact.content
 
 async def getSeverity(channel):
     await channel.send("Enter Incident severity value (from 1-Highest to 4-Lowest)")
     severity = await client.wait_for("message")
-    while(not control.validateImpact(severity.content)):
-        await channel.send("Severity value not valid, try again")
+    while (severity.channel.id != channel.id) or (not (control.validateImpact(severity.content))) or (severity.author == client.user):
+        if(severity.channel.id == channel.id) and (severity.author != client.user):
+            await channel.send("Severity value not valid, try again")
         severity = await client.wait_for("message")
     return severity.content
+
+async def sendCancelMessage(channel):
+    await channel.send("Incident creation cancelled. No Incident submitted")
+    return
+
 
 async def newIncident(channel):
     try:
         operator = await getOperator(channel)
-        if (operator == "exit" or operator == "Exit"):
+        if (operator == "!exit" or operator == "!Exit"):
+            await sendCancelMessage(channel)
             return
 
         title = await getTitle(channel)
-        if (title == "exit" or title == "Exit"):
+        if (title == "!exit" or title == "!Exit"):
+            await sendCancelMessage(channel)
             return
 
         description = await getDescription(channel)
-        if (description == "exit" or description == "Exit"):
+        if (description == "!exit" or description == "!Exit"):
+            await sendCancelMessage(channel)
             return
 
         ci = await getCI(channel)
-        if (ci == "exit" or ci == "Exit"):
+        if (ci == "!exit" or ci == "!Exit"):
+            await sendCancelMessage(channel)
             return
 
         impact = await getImpact(channel)
-        if (impact == "exit" or impact == "Exit"):
+        if (impact == "!exit" or impact == "!Exit"):
+            await sendCancelMessage(channel)
             return
 
         severity = await getSeverity(channel)
-        if (severity == "exit" or severity == "Exit"):
+        if (severity == "!exit" or severity == "!Exit"):
+            await sendCancelMessage(channel)
             return
 
         await channel.send("Submitting incident to Service Manager")
@@ -139,5 +156,16 @@ async def newIncident(channel):
         await channel.send("There was a problem connecting to Service Manager. Try again later")
         print(str(exception))
 
+async def updateIncident(channel):
+    await channel.send("Not implemented yet")
+
+async def closeIncident(channel):
+    await channel.send("Not implemented yet")
+
+async def checkIncident(channel):
+    await channel.send("Not implemented yet")
+
+async def getKpi(channel):
+    await channel.send("Not implemented yet")
 
 client.run(TOKEN)
