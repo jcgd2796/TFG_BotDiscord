@@ -18,15 +18,23 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if(message.author == client.user):
+    if(message.author == client.user or message.channel.id != 817086994672517133):
         return
     else:
         if(message.content[0]=="!"):
             if(getCommand(message.content)=="newIncident"):
-                guild = message.guild
-                channel = await guild.create_text_channel('Incident creation')
-                await message.delete()
-                await newIncident(channel)
+                if control.checkSMAvailability():
+                    guild = message.guild
+                    permissions = {
+                            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                            message.author: discord.PermissionOverwrite(read_messages=True)
+                            }
+                    channel = await guild.create_text_channel("New Incident #"+str(len(guild.channels))+"", overwrites=permissions)
+                    await message.channel.send("Go to channel 'New Incident #"+str(len(guild.channels)-1)+" to create the incident.")
+                    await newIncident(channel)
+                else:
+                    await channel.send("Service Manager is not available right now. Try again later")
+
             elif(getCommand(message.content)=="updateIncident"):
                 updateIncident()
             elif(getCommand(message.content)=="closeIncident"):
@@ -42,12 +50,15 @@ def getCommand(content):
     return content.split('!')[1].split('\n')[0]
 
 async def getOperator(channel):
-    await channel.send("INCIDENT CREATION\n Enter your Service Manager Login: ")
+    await channel.send("----------INCIDENT CREATION----------\n Enter your Service Manager Login: ")
     operator = await client.wait_for("message")
-    while(not control.validateLogin(operator.content)):
-        await channel.send("User not found, enter your Service Manager Login")
+    while (operator.channel.id != channel.id) or (not (control.validateLogin(operator.content))) or (operator.author == client.user):
+        if(operator.channel.id == channel.id):
+            await channel.send("User not found, enter your Service Manager Login")
         operator = await client.wait_for("message")
+    print(control.validateLogin(operator.content))
     return operator.content
+
 
 async def getTitle(channel):
     await channel.send("Enter Incident title")
@@ -95,34 +106,38 @@ async def getSeverity(channel):
     return severity.content
 
 async def newIncident(channel):
-    operator = await getOperator(channel)
-    if (operator == "exit" or operator == "Exit"):
-        return
+    try:
+        operator = await getOperator(channel)
+        if (operator == "exit" or operator == "Exit"):
+            return
 
-    title = await getTitle(channel)
-    if (title == "exit" or title == "Exit"):
-        return
+        title = await getTitle(channel)
+        if (title == "exit" or title == "Exit"):
+            return
 
-    description = await getDescription(channel)
-    if (description == "exit" or description == "Exit"):
-        return
+        description = await getDescription(channel)
+        if (description == "exit" or description == "Exit"):
+            return
 
-    ci = await getCI(channel)
-    if (ci == "exit" or ci == "Exit"):
-        return
+        ci = await getCI(channel)
+        if (ci == "exit" or ci == "Exit"):
+            return
 
-    impact = await getImpact(channel)
-    if (impact == "exit" or impact == "Exit"):
-        return
+        impact = await getImpact(channel)
+        if (impact == "exit" or impact == "Exit"):
+            return
 
-    severity = await getSeverity(channel)
-    if (severity == "exit" or severity == "Exit"):
-        return
+        severity = await getSeverity(channel)
+        if (severity == "exit" or severity == "Exit"):
+            return
 
-    await channel.send("Submitting incident to Service Manager")
-    response = control.createIncident(operator,title,description,ci,impact,severity)
-    await channel.send("Incident created succesfully")
-    await channel.send(response)
+        await channel.send("Submitting incident to Service Manager")
+        response = control.createIncident(operator,title,description,ci,impact,severity)
+        await channel.send("Incident created succesfully")
+        await channel.send(response)
+    except Exception as exception:
+        await channel.send("There was a problem connecting to Service Manager. Try again later")
+        print(str(exception))
 
 
 client.run(TOKEN)

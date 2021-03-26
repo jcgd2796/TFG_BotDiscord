@@ -11,7 +11,12 @@ url = os.getenv("URL")
 def validateLogin(login):
     response = requests.get(url+'/operators/?name='+login,
             auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
-    return(response.json()['@count']>0)
+    if (response.status_code != 200):
+        raise Exception
+    elif (response.json()['@count']==0):
+        return False
+    else:
+        return True
 
 def validateTitle(title):
     return len(title) > 10
@@ -33,4 +38,6 @@ def sendToSM(incidentJson):
     response = requests.post(url+"/incidents",data=incidentJson,auth=HTTPBasicAuth('bot',os.getenv('BOT_OPERATOR_PASS')))
     return response.json()
 
-
+def checkSMAvailability():
+    response = requests.get(url+'/operators/?name=bot',auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
+    return response.status_code < 300
