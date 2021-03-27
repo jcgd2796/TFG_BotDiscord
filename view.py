@@ -30,10 +30,10 @@ async def on_message(message):
                             message.author: discord.PermissionOverwrite(read_messages=True)
                             }
                     channel = await guild.create_text_channel("New Incident #"+str(len(guild.channels))+"", overwrites=permissions)
-                    await message.channel.send("Go to channel 'New Incident #"+str(len(guild.channels)-1)+" to create the incident.")
+                    await sendMessage(message.channel,"Go to channel 'New Incident #"+str(len(guild.channels)-1)+" to create the incident.")
                     await newIncident(channel)
                 else:
-                    await channel.send("Service Manager is not available right now. Try again later")
+                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
 
             elif(getCommand(message.content)=="updateIncident"):
                 updateIncident()
@@ -44,69 +44,69 @@ async def on_message(message):
             elif(getCommand(message.content)=="getKpi"):
                 getKpi()
             else: #help or other invalid message
-                await message.channel.send("Avalable actions: \n !help: shows available actions. \n !newIncident: starts the incident creation. \n !updateIncident: modify an incident.\n !closeIncident: Close an incident. \n !checkIncident: get an incident. \n !getKpi: get one or more KPIs (Key Performance Indicator)")
+                await sendMessage(message.channel,"Avalable actions: \n !help: shows available actions. \n !newIncident: starts the incident creation. \n !updateIncident: modify an incident.\n !closeIncident: Close an incident. \n !checkIncident: get an incident. \n !getKpi: get one or more KPIs (Key Performance Indicator)")
 
 def getCommand(content):
     return content.split('!')[1].split('\n')[0]
 
 async def getOperator(channel):
-    await channel.send("----------INCIDENT CREATION----------\n Enter your Service Manager Login: ")
+    await sendMessage(channel,"----------INCIDENT CREATION----------\n Enter your Service Manager Login: ")
     operator = await client.wait_for("message")
     while (operator.channel.id != channel.id) or (not (control.validateLogin(operator.content))) or (operator.author == client.user):
         if(operator.channel.id == channel.id) and (operator.author != client.user):
-            await channel.send("User not found, enter your Service Manager Login")
+            await sendMessage(channel,"User not found, enter your Service Manager Login")
         operator = await client.wait_for("message")
     return control.getOperatorName(operator.content)
 
 
 async def getTitle(channel):
-    await channel.send("Enter Incident title")
+    await sendMessage(channel,"Enter Incident title")
     title = await client.wait_for("message")
     while (title.channel.id != channel.id) or (not (control.validateTitle(title.content))) or (title.author == client.user):
         if(title.channel.id == channel.id) and (title.author != client.user):
-            await channel.send("Title not valid, enter Incident title")
+            await sendMessage(channel,"Title not valid, enter Incident title")
         title = await client.wait_for("message")
     return title.content
 
 async def getDescription(channel):
-    await channel.send("Enter Incident description")
+    await sendMessage(channel,"Enter Incident description")
     description = await client.wait_for("message")
     while (description.channel.id != channel.id) or (not (control.validateTitle(description.content))) or (description.author == client.user):
         if(description.channel.id == channel.id) and (description.author != client.user):
-            await channel.send("Description not valid, try again")
+            await sendMessage(channel,"Description not valid, try again")
         description = await client.wait_for("message")
     return description.content
 
 async def getCI(channel):
-    await channel.send("Enter name of the Affected CI.")
+    await sendMessage(channel,"Enter name of the Affected CI.")
     ci = await client.wait_for("message")
     while (ci.channel.id != channel.id) or (not (control.validateCI(ci.content))) or (ci.author == client.user):
         if(ci.channel.id == channel.id) and (ci.author != client.user):
-            await channel.send("CI with that name not found, try again")
+            await sendMessage(channel,"CI with that name not found, try again")
         ci = await client.wait_for("message")
     return control.getCI(ci.content)['content'][0]['Device']['ConfigurationItem']
 
 
 async def getImpact(channel):
-    await channel.send("Enter Incident impact value (from 2-High to 4-Low)")
+    await sendMessage(channel,"Enter Incident impact value (from 2-High to 4-Low)")
     impact = await client.wait_for("message")
     while (impact.channel.id != channel.id) or (not (control.validateImpact(impact.content))) or (impact.author == client.user):
         if(impact.channel.id == channel.id) and (impact.author != client.user):
-            await channel.send("Impact value not valid, try again")
+            await sendMessage(channel,"Impact value not valid, try again")
         impact = await client.wait_for("message")
     return impact.content
 
 async def getSeverity(channel):
-    await channel.send("Enter Incident severity value (from 2-High to 4-Low)")
+    await sendMessage(channel,"Enter Incident severity value (from 2-High to 4-Low)")
     severity = await client.wait_for("message")
     while (severity.channel.id != channel.id) or (not (control.validateImpact(severity.content))) or (severity.author == client.user):
         if(severity.channel.id == channel.id) and (severity.author != client.user):
-            await channel.send("Severity value not valid, try again")
+            await sendMessage(channel,"Severity value not valid, try again")
         severity = await client.wait_for("message")
     return severity.content
 
 async def sendCancelMessage(channel):
-    await channel.send("Incident creation cancelled. No Incident submitted")
+    await sendMessage(channel,"Incident creation cancelled. No Incident submitted")
     return
 
 
@@ -142,26 +142,29 @@ async def newIncident(channel):
             await sendCancelMessage(channel)
             return
 
-        await channel.send("Submitting incident to Service Manager")
+        await sendMessage(channel,"Submitting incident to Service Manager")
         response = control.createIncident(operator,title,description,ci,impact,severity)
-        await channel.send("Incident created succesfully")
+        await sendMessage(channel,"Incident created succesfully")
         msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
-        await channel.send(msg)
+        await sendMessage(channel,msg)
     except Exception as exception:
-        await channel.send("There was a problem connecting to Service Manager. Try again later")
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
         raise exception
         print(str(exception))
 
 async def updateIncident(channel):
-    await channel.send("Not implemented yet")
+    await sendMessage(channel,"Not implemented yet")
 
 async def closeIncident(channel):
-    await channel.send("Not implemented yet")
+    await sendMessage(channel,"Not implemented yet")
 
 async def checkIncident(channel):
-    await channel.send("Not implemented yet")
+    await sendMessage(channel,"Not implemented yet")
 
 async def getKpi(channel):
-    await channel.send("Not implemented yet")
+    await sendMessage(channel,"Not implemented yet")
+
+async def sendMessage(channel,message):
+    await channel.send(message)
 
 client.run(TOKEN)
