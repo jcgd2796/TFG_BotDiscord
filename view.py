@@ -56,7 +56,7 @@ async def getOperator(channel):
         if(operator.channel.id == channel.id) and (operator.author != client.user):
             await channel.send("User not found, enter your Service Manager Login")
         operator = await client.wait_for("message")
-    return operator.content
+    return control.getOperatorName(operator.content)
 
 
 async def getTitle(channel):
@@ -78,23 +78,17 @@ async def getDescription(channel):
     return description.content
 
 async def getCI(channel):
-    await channel.send("Enter Affected CI ID. \n List of CIs")
-    cis = control.getCIs()
-    ids = list()
-    string = ""
-    for ci in cis['content']:
-        string+= str(ci)+"\n"
-        ids.append(ci['Device']['ConfigurationItem'])
-    await channel.send(string)
-    ciId = await client.wait_for("message")
-    while (ciId.channel.id != channel.id) or (ciId.content not in ids) or (ciId.author == client.user):
-        if(ciId.channel.id == channel.id) and (ciId.author != client.user):
-            await channel.send("CI id not valid, try again")
-        ciId = await client.wait_for("message")
-    return ciId.content
+    await channel.send("Enter name of the Affected CI.")
+    ci = await client.wait_for("message")
+    while (ci.channel.id != channel.id) or (not (control.validateCI(ci.content))) or (ci.author == client.user):
+        if(ci.channel.id == channel.id) and (ci.author != client.user):
+            await channel.send("CI with that name not found, try again")
+        ci = await client.wait_for("message")
+    return control.getCI(ci.content)['content'][0]['Device']['ConfigurationItem']
+
 
 async def getImpact(channel):
-    await channel.send("Enter Incident impact value (from 1-Highest to 4-Lowest)")
+    await channel.send("Enter Incident impact value (from 2-High to 4-Low)")
     impact = await client.wait_for("message")
     while (impact.channel.id != channel.id) or (not (control.validateImpact(impact.content))) or (impact.author == client.user):
         if(impact.channel.id == channel.id) and (impact.author != client.user):
@@ -103,7 +97,7 @@ async def getImpact(channel):
     return impact.content
 
 async def getSeverity(channel):
-    await channel.send("Enter Incident severity value (from 1-Highest to 4-Lowest)")
+    await channel.send("Enter Incident severity value (from 2-High to 4-Low)")
     severity = await client.wait_for("message")
     while (severity.channel.id != channel.id) or (not (control.validateImpact(severity.content))) or (severity.author == client.user):
         if(severity.channel.id == channel.id) and (severity.author != client.user):
@@ -151,9 +145,11 @@ async def newIncident(channel):
         await channel.send("Submitting incident to Service Manager")
         response = control.createIncident(operator,title,description,ci,impact,severity)
         await channel.send("Incident created succesfully")
-        await channel.send(response)
+        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
+        await channel.send(msg)
     except Exception as exception:
         await channel.send("There was a problem connecting to Service Manager. Try again later")
+        raise exception
         print(str(exception))
 
 async def updateIncident(channel):

@@ -20,23 +20,32 @@ def validateLogin(login):
     else:
         return True
 
+def getOperatorName(login):
+    return requests.get(url+'/operators/?name='+login,
+            auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS"))).json()['content'][0]['Operator']['contact.name']
+
 def validateTitle(title):
     if(title == "!exit") or (title == "!Exit"):
         return True
     return len(title) > 10
 
-def getCIs():
-    response = requests.get(url+'/devices',auth=HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
+def validateCI(ci):
+    response = requests.get(url+'/devices/?DisplayName='+ci,auth=HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
+    return (response.status_code < 300) and (response.json()['@count'] > 0)
+
+def getCI(name):
+    response = requests.get(url+'/devices/?DisplayName='+name,auth=HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
     return response.json()
 
 def validateImpact(impact):
     if(impact == "!exit") or (impact == "!Exit"):
         return True
-    return (int(impact) > 0 and int(impact) < 5) 
+    return (int(impact) > 1 and int(impact) < 5) 
 
 def createIncident(operator,title,description,ci,impact,severity):
     incident = Incident(operator,title,description,ci,impact,severity)
     incidentJson = incident.toJsonObject()
+    print(incidentJson)
     response = sendToSM(incidentJson)
     return response
 
@@ -47,3 +56,6 @@ def sendToSM(incidentJson):
 def checkSMAvailability():
     response = requests.get(url+'/operators/?name=bot',auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
     return response.status_code < 300
+
+
+

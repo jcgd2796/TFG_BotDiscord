@@ -1,7 +1,15 @@
 from model.Incident import *
-import controller.controller as control
+import requests
+import os
+from requests.auth import HTTPBasicAuth
+import dotenv
+import json
 
-incident = Incident('jcgd','title','desc','CI1000005','1','2')
+dotenv.load_dotenv()
+url = os.getenv("URL")
+inc = requests.get(url+'/incidents/IM10268',auth=HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS"))).json()
 
-response = control.createIncident('jcgd','title','desc','CI1000005','1','2')
-#print(response)
+print(inc['Incident']['IncidentID'])
+
+#print(ci["content"]["Device"]["ConfigurationItem"])
+
