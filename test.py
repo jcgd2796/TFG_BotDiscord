@@ -6,10 +6,5 @@ import dotenv
 import json
 
 dotenv.load_dotenv()
-url = os.getenv("URL")
-inc = requests.get(url+'/incidents/IM10268',auth=HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS"))).json()
 
-print(inc['Incident']['IncidentID'])
-
-#print(ci["content"]["Device"]["ConfigurationItem"])
-
+incident = Incident ("123","qwe","qwe","dev",3,4)
