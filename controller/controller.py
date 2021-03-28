@@ -71,11 +71,14 @@ def checkSMAvailability():
 
 def validateIncident(incidentId):
     response = requests.get(url+'/incidents/'+incidentId,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
-    return response.json()['ReturnCode'] == 0 and response.json()['Incident']['Phase'] != 'Closure'
+    return response.json()['ReturnCode'] == 0
 
 def getIncident(incidentId):
     response = requests.get(url+'/incidents/'+incidentId,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
     return Incident(response.json()['Incident']['Contact'],response.json()['Incident']['Title'],response.json()['Incident']['Description'][0],response.json()['Incident']['Service'],response.json()['Incident']['Impact'],response.json()['Incident']['Urgency'],response.json()['Incident']['IncidentID'])
+
+def getIncidentData(incidentId):
+    return requests.get(url+'/incidents/'+incidentId,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS"))).json()
 
 
 def validateList(valuesString):

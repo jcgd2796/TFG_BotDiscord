@@ -56,7 +56,16 @@ async def on_message(message):
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
 
             elif(getCommand(message.content)=="checkIncident"):
-                checkIncident()
+                if control.checkSMAvailability():
+                    guild = message.guild
+                    permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                            message.author: discord.PermissionOverwrite(read_messages=True)}
+                    channel = await guild.create_text_channel("Check Incident #"+str(len(guild.channels))+"", overwrites=permissions)
+                    await sendMessage(message.channel,"Go to channel 'Check Incident #"+str(len(guild.channels)-1)+" to get the incident data.")
+                    await checkIncident(channel)
+                else:
+                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
+            
             elif(getCommand(message.content)=="getKpi"):
                 getKpi()
             else: #help or other invalid message
@@ -169,13 +178,22 @@ async def newIncident(channel):
         print(str(exception))
 
 async def getIncident(channel):
-    await sendMessage(channel,"Enter the ID of the incident you want to update")
+    await sendMessage(channel,"Enter the ID of the incident")
     incId = await client.wait_for("message")
     while (incId.channel.id != channel.id) or (not (control.validateIncident(incId.content))) or (incId.author == client.user):
         if(incId.channel.id == channel.id) and (incId.author != client.user):
-            await sendMessage(channel,"Incident ID not valid, or the incident is already closed. Try again")
+            await sendMessage(channel,"Incident ID not valid. Try again")
         incId = await client.wait_for("message")
     return control.getIncident(incId.content)
+
+async def getIncidentData(channel):
+    await sendMessage(channel,"Enter the ID of the incident")
+    incId = await client.wait_for("message")
+    while (incId.channel.id != channel.id) or (not (control.validateIncident(incId.content))) or (incId.author == client.user):
+        if(incId.channel.id == channel.id) and (incId.author != client.user):
+            await sendMessage(channel,"Incident ID not valid. Try again")
+        incId = await client.wait_for("message")
+    return control.getIncidentData(incId.content)
 
 async def getUpdateList(channel):
     await sendMessage(channel,"Enter the values you want to update, separated by commas")
@@ -233,7 +251,7 @@ async def updateIncident(channel):
         await sendMessage(channel,"Submitting incident to Service Manager")
         response = control.updateIncident(incident.toJsonObject())
         await sendMessage(channel,"Incident updated succesfully")
-        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
+        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+ 'Incident Status: '+response['Incident']['Status']
         await sendMessage(channel,msg)
     except Exception as exception:
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
@@ -284,7 +302,13 @@ async def closeIncident(channel):
         print(str(exception))
 
 async def checkIncident(channel):
-    await sendMessage(channel,"Not implemented yet")
+    try:
+        response = await getIncidentData(channel)
+        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
+        await sendMessage(channel,msg)
+    except Exception as exception:
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+        raise exception
 
 async def getKpi(channel):
     await sendMessage(channel,"Not implemented yet")
