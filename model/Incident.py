@@ -9,6 +9,8 @@ class Incident:
         self.impact = impact
         self.severity = severity
         self.id = incidentID
+        self.solution = ""
+        self.closureCode = ""
 
     def setOperator(self,newOperator):
         self.operator = newOperator
@@ -25,8 +27,16 @@ class Incident:
     def setSeverity(self,newSeverity):
         self.severity = newSeverity
 
+    def setSolution(self,newSolution):
+        self.solution = newSolution
+
+    def setClosureCode(self,newCode):
+        self.closureCode = newCode
+
     def toJsonObject(self):
         if self.id == None:
             return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Urgency\": \""+self.severity+"\"}}")
-        else:
+        elif self.id != None and self.solution == "":
             return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Urgency\": \""+self.severity+"\"}}")
+        else:
+            return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Status\":\"Closed\",\"Phase\": \"Closure\",\"Urgency\": \""+self.severity+"\",\"Solution\": [\""+self.solution+"\"],\"ClosureCode\":\""+self.closureCode+"\"}}")

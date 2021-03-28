@@ -55,10 +55,14 @@ def updateIncident(incidentJson):
 
 def sendUpdateToSM(incidentJson):
     response = requests.put(url+"/incidents/"+incidentJson['Incident']['IncidentID'],data=json.dumps(incidentJson),auth=HTTPBasicAuth('bot',os.getenv('BOT_OPERATOR_PASS')))
+    if response.status_code >= 300:
+        raise Exception
     return response.json()
 
 def sendToSM(incidentJson):
     response = requests.post(url+"/incidents",data=incidentJson,auth=HTTPBasicAuth('bot',os.getenv('BOT_OPERATOR_PASS')))
+    if response.status_code >= 300:
+        raise Exception
     return response.json()
 
 def checkSMAvailability():
@@ -67,11 +71,11 @@ def checkSMAvailability():
 
 def validateIncident(incidentId):
     response = requests.get(url+'/incidents/'+incidentId,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
-    return response.json()['ReturnCode'] == 0
+    return response.json()['ReturnCode'] == 0 and response.json()['Incident']['Phase'] != 'Closure'
 
 def getIncident(incidentId):
     response = requests.get(url+'/incidents/'+incidentId,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
-    return Incident(response.json()['Incident']['Contact'],response.json()['Incident']['Title'],response.json()['Incident']['Description'],response.json()['Incident']['Service'],response.json()['Incident']['Impact'],response.json()['Incident']['Urgency'],response.json()['Incident']['IncidentID'])
+    return Incident(response.json()['Incident']['Contact'],response.json()['Incident']['Title'],response.json()['Incident']['Description'][0],response.json()['Incident']['Service'],response.json()['Incident']['Impact'],response.json()['Incident']['Urgency'],response.json()['Incident']['IncidentID'])
 
 
 def validateList(valuesString):
@@ -85,3 +89,15 @@ def validateList(valuesString):
 def getValuesList(valuesString):
     return valuesString.replace(" ","").lower().split(",")
 
+def validateClosureCode(closureCode):
+    if closureCode.lower() == '!exit':
+        return True
+    else:
+        return int(closureCode) >= 0 and int(closureCode) <13
+
+def getClosureCode(closureCode):
+    closureCodesList = ['Diagnosed Succesfully','No Fault Found','No User Response','Not Reproducible','Out of Scope','Request Rejected','Resolved Succesfully','Unable to Solve','Withdrawn by User','Automatically Closed','Solved by Change/Service Request','Solved by User Instruction','Solved by Workaround']
+    return str(closureCodesList[int(closureCode)])
+
+def closeIncident(incidentJson):
+    return sendUpdateToSM(incidentJson)
