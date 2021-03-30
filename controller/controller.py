@@ -5,6 +5,7 @@ import dotenv
 import json
 from requests.auth import HTTPBasicAuth
 from model.Incident import *
+from model.Kpi import *
 
 dotenv.load_dotenv()
 url = os.getenv("URL")
@@ -104,3 +105,39 @@ def getClosureCode(closureCode):
 
 def closeIncident(incidentJson):
     return sendUpdateToSM(incidentJson)
+
+def validateKpiList(kpis):
+    kpiList = kpis.replace(" ","").lower().split(',')
+    if ('!exit' in kpiList):
+        return True
+    elif '*' in kpiList:
+        return True
+    else:
+        try:
+            for kpi in kpiList:
+                if int(kpi) > 11 or int(kpi) < 0:
+                    return False
+            return True
+        except ValueError:
+            return False
+
+def getKpis(kpis):
+    staticKpiList = ['Average group reassignments','Average number of incidents solved per employee daily','Average days between Incident opening and closure','Number of incidents closed' 
+    ,'Number of incidents closed this month','Number of incidents daily closed this month','Number of incidents created this month','Average number of incidents created daily this month','Number of incidents solved','Most common Incident priority','% of critical Incidents','% of Incidents escalated']
+    kpiList = kpis.replace(" ","").lower().split(',')
+    kpis = list()
+    if '*' in kpiList:
+        for kpiName in staticKpiList:
+            kpis.append(getLatestKpi(kpiName))
+    else:
+        for kpiNumber in kpiList:
+            kpis.append(getLatestKpi(staticKpiList[int(kpiNumber)]))
+    return kpis
+
+def getLatestKpi(kpiName):
+    response = requests.get(url+'/KPIS/?name='+kpiName,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
+    latestKpi = response.json()['content'][len(response.json()['content'])-1]['KPI']  #The latest kpi is always the last one in the JsonArray
+    return Kpi(latestKpi['Name'],latestKpi['Value'],latestKpi['Last_update'])
+
+
+        

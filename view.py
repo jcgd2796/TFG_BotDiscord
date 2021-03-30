@@ -67,7 +67,15 @@ async def on_message(message):
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
             
             elif(getCommand(message.content)=="getKpi"):
-                getKpi()
+                if control.checkSMAvailability():
+                    guild = message.guild
+                    permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                            message.author: discord.PermissionOverwrite(read_messages=True)}
+                    channel = await guild.create_text_channel("Get KPI #"+str(len(guild.channels))+"", overwrites=permissions)
+                    await sendMessage(message.channel,"Go to channel 'Get KPI #"+str(len(guild.channels)-1)+" to get the desired KPIs.")
+                    await getKpi(channel)
+                else:
+                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
             else: #help or other invalid message
                 await sendMessage(message.channel,"Avalable actions: \n !help: shows available actions. \n !newIncident: starts the incident creation. \n !updateIncident: modify an incident.\n !closeIncident: Close an incident. \n !checkIncident: get an incident. \n !getKpi: get one or more KPIs (Key Performance Indicator)")
 
@@ -310,8 +318,28 @@ async def checkIncident(channel):
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
         raise exception
 
+async def getKpiList(channel):
+    await sendMessage(channel,"Enter the number assigned to the KPIs you want to get, separated by commas, or enter \"*\" to get all of them: \n 0-Average group reassignments \n 1-Average number of incidents solved per employee daily \n 2-Average days between Incident opening and closure \n 3-Number of incidents closed \n 4-Number of incidents closed this month \n 5-Number of incidents daily closed this month \n 6-Number of incidents created this month \n 7-Average number of incidents created daily this month \n 8-Number of incidents solved \n 9-Most common Incident priority \n 10-% of critical Incidents \n 11-% of Incidents escalated")
+    kpis = await client.wait_for("message")
+    while (kpis.channel.id != channel.id) or (kpis.author == client.user) or (not (control.validateKpiList(kpis.content))):
+        if(kpis.channel.id == channel.id) and (kpis.author != client.user):
+            await sendMessage(channel,"Kpi list not valid. Must be one or more numbers from 0 to 11, or an asterisk")
+        kpis = await client.wait_for("message")
+    return control.getKpis(kpis.content)
+
+
 async def getKpi(channel):
-    await sendMessage(channel,"Not implemented yet")
+    try:
+        kpiList = await getKpiList(channel)
+        if '!Exit' in kpiList or '!exit' in kpiList:
+            return
+        for kpi in kpiList:
+            msg = 'KPI name: '+kpi.getName()+'\n'+'KPI value: '+str(kpi.getValue())+'\n'+'Date: '+kpi.getDate()
+            await sendMessage(channel,msg)
+    except Exception as exception:
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+        raise exception
+        print(str(exception))
 
 async def sendMessage(channel,message):
     await channel.send(message)
