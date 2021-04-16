@@ -42,7 +42,10 @@ def getCI(name):
 def validateImpact(impact):
     if(impact == "!exit") or (impact == "!Exit"):
         return True
-    return (int(impact) > 1 and int(impact) < 5) 
+    try:
+        return (int(impact) > 1 and int(impact) < 5) 
+    except ValueError:      #NaN
+        return False
 
 def createIncident(operator,title,description,ci,impact,severity):
     incident = Incident(operator,title,description,ci,impact,severity,None)
@@ -123,7 +126,7 @@ def validateKpiList(kpis):
 
 def getKpis(kpis):
     staticKpiList = ['Average group reassignments','Average number of incidents solved per employee daily','Average days between Incident opening and closure','Number of incidents closed' 
-    ,'Number of incidents closed this month','Number of incidents daily closed this month','Number of incidents created this month','Average number of incidents created daily this month','Number of incidents solved','Most common Incident priority','% of critical Incidents','% of Incidents escalated']
+    ,'Number of incidents closed this month','Number of incidents daily closed this month','Number of incidents created this month','Average number of incidents created daily this month','Number of incidents solved','Most common Incident priority','Percentage of critical Incidents','Percentage of Incidents escalated']
     kpiList = kpis.replace(" ","").lower().split(',')
     kpis = list()
     if '*' in kpiList:
@@ -139,5 +142,8 @@ def getLatestKpi(kpiName):
     latestKpi = response.json()['content'][len(response.json()['content'])-1]['KPI']  #The latest kpi is always the last one in the JsonArray
     return Kpi(latestKpi['Name'],latestKpi['Value'],latestKpi['Last_update'])
 
+
+def validateFinishMessage(finishMessage):
+    return finishMessage.lower() == 'yes' or finishMessage.lower() == 'no'
 
         

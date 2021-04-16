@@ -28,7 +28,7 @@ async def on_message(message):
                     permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             message.author: discord.PermissionOverwrite(read_messages=True)}
                     channel = await guild.create_text_channel("New Incident #"+str(len(guild.channels))+"", overwrites=permissions)
-                    await sendMessage(message.channel,"Go to channel 'New Incident #"+str(len(guild.channels)-1)+" to create the incident.")
+                    await sendMessage(message.channel,"Go to channel "+channel.mention +" to create the incident.")
                     await newIncident(channel)
                 else:
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
@@ -39,7 +39,7 @@ async def on_message(message):
                     permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             message.author: discord.PermissionOverwrite(read_messages=True)}
                     channel = await guild.create_text_channel("Update Incident #"+str(len(guild.channels))+"", overwrites=permissions)
-                    await sendMessage(message.channel,"Go to channel 'Update Incident #"+str(len(guild.channels)-1)+" to update the incident.")
+                    await sendMessage(message.channel,"Go to channel "+channel.mention +" to update the incident.")
                     await updateIncident(channel)
                 else:
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
@@ -50,7 +50,7 @@ async def on_message(message):
                     permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             message.author: discord.PermissionOverwrite(read_messages=True)}
                     channel = await guild.create_text_channel("Close Incident #"+str(len(guild.channels))+"", overwrites=permissions)
-                    await sendMessage(message.channel,"Go to channel 'Close Incident #"+str(len(guild.channels)-1)+" to close the incident.")
+                    await sendMessage(message.channel,"Go to channel "+channel.mention +" to close the incident.")
                     await closeIncident(channel)
                 else:
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
@@ -61,7 +61,7 @@ async def on_message(message):
                     permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             message.author: discord.PermissionOverwrite(read_messages=True)}
                     channel = await guild.create_text_channel("Check Incident #"+str(len(guild.channels))+"", overwrites=permissions)
-                    await sendMessage(message.channel,"Go to channel 'Check Incident #"+str(len(guild.channels)-1)+" to get the incident data.")
+                    await sendMessage(message.channel,"Go to channel "+channel.mention +" to get the incident data.")
                     await checkIncident(channel)
                 else:
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
@@ -72,7 +72,7 @@ async def on_message(message):
                     permissions = {guild.default_role: discord.PermissionOverwrite(read_messages=False),
                             message.author: discord.PermissionOverwrite(read_messages=True)}
                     channel = await guild.create_text_channel("Get KPI #"+str(len(guild.channels))+"", overwrites=permissions)
-                    await sendMessage(message.channel,"Go to channel 'Get KPI #"+str(len(guild.channels)-1)+" to get the desired KPIs.")
+                    await sendMessage(message.channel,"Go to channel "+channel.mention +" to get the desired KPIs.")
                     await getKpi(channel)
                 else:
                     await sendMessage(channnel,"Service Manager is not available right now. Try again later")
@@ -177,7 +177,7 @@ async def newIncident(channel):
 
         await sendMessage(channel,"Submitting incident to Service Manager")
         response = control.createIncident(operator,title,description,ci,impact,severity)
-        await sendMessage(channel,"Incident created succesfully")
+        await sendMessage(channel,"Incident created succesfully. Take note of the Incident ID as it will be requested for some operations")
         msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
         await sendMessage(channel,msg)
     except Exception as exception:
@@ -259,7 +259,7 @@ async def updateIncident(channel):
         await sendMessage(channel,"Submitting incident to Service Manager")
         response = control.updateIncident(incident.toJsonObject())
         await sendMessage(channel,"Incident updated succesfully")
-        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+ 'Incident Status: '+response['Incident']['Status']
+        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+ 'Incident Status: '+response['Incident']['Status']
         await sendMessage(channel,msg)
     except Exception as exception:
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
@@ -306,7 +306,6 @@ async def closeIncident(channel):
         await sendMessage(channel,msg)
     except Exception as exception:
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
-        raise exception
         print(str(exception))
 
 async def checkIncident(channel):
@@ -319,27 +318,39 @@ async def checkIncident(channel):
         raise exception
 
 async def getKpiList(channel):
-    await sendMessage(channel,"Enter the number assigned to the KPIs you want to get, separated by commas, or enter \"*\" to get all of them: \n 0-Average group reassignments \n 1-Average number of incidents solved per employee daily \n 2-Average days between Incident opening and closure \n 3-Number of incidents closed \n 4-Number of incidents closed this month \n 5-Number of incidents daily closed this month \n 6-Number of incidents created this month \n 7-Average number of incidents created daily this month \n 8-Number of incidents solved \n 9-Most common Incident priority \n 10-% of critical Incidents \n 11-% of Incidents escalated")
+    await sendMessage(channel,"Enter the number assigned to the KPIs you want to get, separated by commas, or enter \"*\" to get all of them: \n 0-Average group reassignments \n 1-Average number of incidents solved per employee daily \n 2-Average days between Incident opening and closure \n 3-Number of incidents closed \n 4-Number of incidents closed this month \n 5-Number of incidents daily closed this month \n 6-Number of incidents created this month \n 7-Average number of incidents created daily this month \n 8-Number of incidents solved \n 9-Most common Incident priority \n 10-Percentage of critical Incidents \n 11-Percentage of Incidents escalated"+'\n For example: \"1,2,3\"; \"5,2,1,9\"; \"1\";\"*\"')
+
     kpis = await client.wait_for("message")
     while (kpis.channel.id != channel.id) or (kpis.author == client.user) or (not (control.validateKpiList(kpis.content))):
         if(kpis.channel.id == channel.id) and (kpis.author != client.user):
             await sendMessage(channel,"Kpi list not valid. Must be one or more numbers from 0 to 11, or an asterisk")
-        kpis = await client.wait_for("message")
+            kpis = await client.wait_for("message")
     return control.getKpis(kpis.content)
 
 
 async def getKpi(channel):
-    try:
-        kpiList = await getKpiList(channel)
-        if '!Exit' in kpiList or '!exit' in kpiList:
-            return
-        for kpi in kpiList:
-            msg = 'KPI name: '+kpi.getName()+'\n'+'KPI value: '+str(kpi.getValue())+'\n'+'Date: '+kpi.getDate()
-            await sendMessage(channel,msg)
-    except Exception as exception:
-        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
-        raise exception
-        print(str(exception))
+    finished = False
+    while not (finished):
+        try:
+            kpiList = await getKpiList(channel)
+            if '!Exit' in kpiList or '!exit' in kpiList:
+                return
+            for kpi in kpiList:
+                msg = 'KPI name: '+kpi.getName()+'\n'+'KPI value: '+str(kpi.getValue())+'\n'+'Date (dd/mm/yyyy hh:mm UTC+0): '+kpi.getFormattedDate()+'\n'+'-----------------------------------------'
+                await sendMessage(channel,msg)
+            await sendMessage(channel,'Do you want to get more KPIs? (Yes/No)')
+            finishMessage = await client.wait_for("message")
+            while (finishMessage.channel.id != channel.id) or (finishMessage.author == client.user) or not(control.validateFinishMessage(finishMessage.content)):
+                if(finishMessage.channel.id == channel.id) and (finishMessage.author != client.user):
+                    await sendMessage(channel,"Entry not valid. Must be \"Yes\" or \"No\"")
+                finishMessage = await client.wait_for("message")
+            if (finishMessage.content.lower() == 'no'):
+                finished = True
+
+        except Exception as exception:
+            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+            raise exception
+            print(str(exception))
 
 async def sendMessage(channel,message):
     await channel.send(message)
