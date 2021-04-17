@@ -9,7 +9,7 @@ from dotenv import load_dotenv  #for the environment file
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-
+GENERAL_CHANNEL_ID = 817086994672517133
 client = discord.Client()
 
 @client.event
@@ -18,7 +18,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if(message.author == client.user or message.channel.id != 817086994672517133):
+    if(message.author == client.user or message.channel.id != GENERAL_CHANNEL_ID):
         return
     else:
         if(message.content[0]=="!"):
@@ -89,6 +89,8 @@ async def getOperator(channel):
         if(operator.channel.id == channel.id) and (operator.author != client.user):
             await sendMessage(channel,"User not found, enter your Service Manager Login")
         operator = await client.wait_for("message")
+    if operator.content.lower() == '!exit':
+        return operator.content.lower()
     return control.getOperatorName(operator.content)
 
 
@@ -99,6 +101,8 @@ async def getTitle(channel):
         if(title.channel.id == channel.id) and (title.author != client.user):
             await sendMessage(channel,"Title not valid, enter Incident title")
         title = await client.wait_for("message")
+    if title.content.lower() == '!exit':
+        return title.content.lower()
     return title.content
 
 async def getDescription(channel):
@@ -108,6 +112,8 @@ async def getDescription(channel):
         if(description.channel.id == channel.id) and (description.author != client.user):
             await sendMessage(channel,"Description not valid, try again")
         description = await client.wait_for("message")
+    if description.content.lower() == '!exit':
+        return description.content.lower()
     return description.content
 
 async def getCI(channel):
@@ -117,6 +123,8 @@ async def getCI(channel):
         if(ci.channel.id == channel.id) and (ci.author != client.user):
             await sendMessage(channel,"CI with that name not found, try again")
         ci = await client.wait_for("message")
+    if ci.content.lower() == '!exit':
+        return ci.content.lower()
     return control.getCI(ci.content)['content'][0]['Device']['ConfigurationItem']
 
 
@@ -127,6 +135,8 @@ async def getImpact(channel):
         if(impact.channel.id == channel.id) and (impact.author != client.user):
             await sendMessage(channel,"Impact value not valid, try again")
         impact = await client.wait_for("message")
+    if impact.content.lower() == '!exit':
+        return impact.content.lower()
     return impact.content
 
 async def getSeverity(channel):
@@ -136,54 +146,65 @@ async def getSeverity(channel):
         if(severity.channel.id == channel.id) and (severity.author != client.user):
             await sendMessage(channel,"Severity value not valid, try again")
         severity = await client.wait_for("message")
+    if severity.content.lower() == '!exit':
+        return severity.content.lower()
     return severity.content
 
-async def sendCancelMessage(channel):
-    await sendMessage(channel,"Incident creation cancelled. No Incident submitted")
+async def sendMessage(channel,message):
+    await channel.send(message)
     return
 
+async def sendCancelMessage(channel):
+    await sendMessage(channel,"Operation canceled, no changes performed.")
+    await sendFinishMessage(channel)
+    return
+
+async def sendFinishMessage(channel):
+    await sendMessage(channel,"My job here is done, I won't interact with this channel again. Go to the "+client.get_channel(GENERAL_CHANNEL_ID).mention+" channel to start a new request." )
+    return
 
 async def newIncident(channel):
     try:
         operator = await getOperator(channel)
-        if (operator == "!exit" or operator == "!Exit"):
+        if (operator == "!exit"):
             await sendCancelMessage(channel)
             return
 
         title = await getTitle(channel)
-        if (title == "!exit" or title == "!Exit"):
+        if (title == "!exit"):
             await sendCancelMessage(channel)
             return
 
         description = await getDescription(channel)
-        if (description == "!exit" or description == "!Exit"):
+        if (description == "!exit"):
             await sendCancelMessage(channel)
             return
 
         ci = await getCI(channel)
-        if (ci == "!exit" or ci == "!Exit"):
+        if (ci == "!exit"):
             await sendCancelMessage(channel)
             return
 
         impact = await getImpact(channel)
-        if (impact == "!exit" or impact == "!Exit"):
+        if (impact == "!exit"):
             await sendCancelMessage(channel)
             return
 
         severity = await getSeverity(channel)
-        if (severity == "!exit" or severity == "!Exit"):
+        if (severity == "!exit"):
             await sendCancelMessage(channel)
             return
 
         await sendMessage(channel,"Submitting incident to Service Manager")
         response = control.createIncident(operator,title,description,ci,impact,severity)
         await sendMessage(channel,"Incident created succesfully. Take note of the Incident ID as it will be requested for some operations")
-        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
+        msg = '__**Incident ID: '+response['Incident']['IncidentID']+'**__\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
         await sendMessage(channel,msg)
     except Exception as exception:
-        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
         raise exception
-        print(str(exception))
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+    finally:
+        await sendFinishMessage(channel)
 
 async def getIncident(channel):
     await sendMessage(channel,"Enter the ID of the incident")
@@ -192,6 +213,8 @@ async def getIncident(channel):
         if(incId.channel.id == channel.id) and (incId.author != client.user):
             await sendMessage(channel,"Incident ID not valid. Try again")
         incId = await client.wait_for("message")
+    if incId.content.lower() == '!exit':
+        return incId.content.lower()
     return control.getIncident(incId.content)
 
 async def getIncidentData(channel):
@@ -201,10 +224,12 @@ async def getIncidentData(channel):
         if(incId.channel.id == channel.id) and (incId.author != client.user):
             await sendMessage(channel,"Incident ID not valid. Try again")
         incId = await client.wait_for("message")
+        if incId.content.lower() == '!exit':
+            return incId.content.lower()
     return control.getIncidentData(incId.content)
 
 async def getUpdateList(channel):
-    await sendMessage(channel,"Enter the values you want to update, separated by commas")
+    await sendMessage(channel,"Enter the values you want to update, separated by commas. Accepted values are operator, title, description, impact and severity")
     values = await client.wait_for("message")
     while (values.channel.id != channel.id) or (not (control.validateList(values.content))) or (values.author == client.user):
         if(values.channel.id == channel.id) and (values.author != client.user):
@@ -214,57 +239,71 @@ async def getUpdateList(channel):
 
 async def updateIncident(channel):
     try:
-        incident = await getIncident(channel)
-        updateList = await getUpdateList(channel)
-        print (updateList)
-        if ("!exit" in updateList):
-            return
+        finished = False
+        while not finished:
+            incident = await getIncident(channel)
+            if incident.getPhase() == 'Closure':
+                await sendMessage(channel,"The incident is closed. You can't update a closed incident")
+                return
+            updateList = await getUpdateList(channel)
+            if ("!exit" in updateList):
+                await sendCancelMessage(channel)
+                return
         
-        for field in updateList:
-            if field == 'operator':
-                operator = await getOperator(channel)
-                if (operator == "!exit" or operator == "!Exit"):
-                    await sendCancelMessage(channel)
-                    return
-                incident.setOperator(operator)
+            for field in updateList:
+                if field == 'operator':
+                    operator = await getOperator(channel)
+                    if (operator == "!exit" or operator == "!Exit"):
+                        await sendCancelMessage(channel)
+                        return
+                    incident.setOperator(operator)
 
-            elif field == 'title':
-                title = await getTitle(channel)
-                if (title == "!exit" or title == "!Exit"):
-                    await sendCancelMessage(channel)
-                    return
-                incident.setTitle(title)
+                elif field == 'title':
+                    title = await getTitle(channel)
+                    if (title == "!exit" or title == "!Exit"):
+                        await sendCancelMessage(channel)
+                        return
+                    incident.setTitle(title)
 
-            elif field == 'description':
-                description = await getDescription(channel)
-                if (description == "!exit" or description == "!Exit"):
-                    await sendCancelMessage(channel)
-                    return
-                incident.setDescription(description)
+                elif field == 'description':
+                    description = await getDescription(channel)
+                    if (description == "!exit" or description == "!Exit"):
+                        await sendCancelMessage(channel)
+                        return
+                    incident.setDescription(description)
 
-            elif field == 'impact':
-                impact = await getImpact(channel)
-                if (impact == "!exit" or impact == "!Exit"):
-                    await sendCancelMessage(channel)
-                    return
-                incident.setImpact(impact)
+                elif field == 'impact':
+                    impact = await getImpact(channel)
+                    if (impact == "!exit" or impact == "!Exit"):
+                        await sendCancelMessage(channel)
+                        return
+                    incident.setImpact(impact)
             
-            elif field == 'severity':
-                severity = await getSeverity(channel)
-                if (severity == "!exit" or severity == "!Exit"):
-                    await sendCancelMessage(channel)
-                    return
-                incident.setSeverity(severity)
+                elif field == 'severity':
+                    severity = await getSeverity(channel)
+                    if (severity == "!exit" or severity == "!Exit"):
+                        await sendCancelMessage(channel)
+                        return
+                    incident.setSeverity(severity)
 
-        await sendMessage(channel,"Submitting incident to Service Manager")
-        response = control.updateIncident(incident.toJsonObject())
-        await sendMessage(channel,"Incident updated succesfully")
-        msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+ 'Incident Status: '+response['Incident']['Status']
-        await sendMessage(channel,msg)
+            await sendMessage(channel,"Submitting incident to Service Manager")
+            response = control.updateIncident(incident.toJsonObject())
+            await sendMessage(channel,"Incident updated succesfully. Remember to note the ID for future actions.")
+            msg = '**__Incident ID: '+response['Incident']['IncidentID']+'__**\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+ 'Incident Status: '+response['Incident']['Status']
+            await sendMessage(channel,msg)
+            await sendMessage(channel,'Do you want to modify more incidents? (Yes/No)')
+            finishMessage = await client.wait_for("message")
+            while (finishMessage.channel.id != channel.id) or (finishMessage.author == client.user) or not(control.validateFinishMessage(finishMessage.content)):
+                if(finishMessage.channel.id == channel.id) and (finishMessage.author != client.user):
+                    await sendMessage(channel,"Entry not valid. Must be \"Yes\" or \"No\"")
+                finishMessage = await client.wait_for("message")
+            if (finishMessage.content.lower() == 'no'):
+                finished = True
     except Exception as exception:
-        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
         raise exception
-        print(str(exception))
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+    finally:
+        await sendFinishMessage(channel)
 
 async def getSolution(channel):
     await sendMessage(channel,"Enter the solution of the Incident")
@@ -273,6 +312,8 @@ async def getSolution(channel):
         if(solution.channel.id == channel.id) and (solution.author != client.user):
             await sendMessage(channel,"Solution not valid. Try again")
         solution = await client.wait_for("message")
+        if solution.content.lower() == '!exit':
+            return solution.content.lower()
     return solution.content
 
 async def getClosureCode(channel):
@@ -282,12 +323,20 @@ async def getClosureCode(channel):
         if(code.channel.id == channel.id) and (code.author != client.user):
             await sendMessage(channel,"Closure code not valid. Must be a number between 0 and 12")
         code = await client.wait_for("message")
+        if code.content.lower() == '!exit':
+            return code.content.lower()
     return control.getClosureCode(code.content)
 
 
 async def closeIncident(channel):
     try:
         incident = await getIncident(channel)
+        if incident == '!exit':
+            await sendCancelMessage(channel)
+            return
+        if incident.getPhase() == 'Closure':
+            await sendMessage(channel,'The incident is already closed')
+            return
         solution = await getSolution(channel)
         if solution == '!Exit' or solution == '!exit':
             return
@@ -301,12 +350,13 @@ async def closeIncident(channel):
         incidentJson = incident.toJsonObject()
         response = control.closeIncident(incident.toJsonObject())
         await sendMessage(channel,"Incident closed succesfully")
-        print(response)
         msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
         await sendMessage(channel,msg)
     except Exception as exception:
+        raise exception
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
-        print(str(exception))
+    finally:
+        await sendFinishMessage(channel)
 
 async def checkIncident(channel):
     try:
@@ -314,16 +364,18 @@ async def checkIncident(channel):
         msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
         await sendMessage(channel,msg)
     except Exception as exception:
-        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
         raise exception
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+    finally:
+        await sendFinishMessage(channel)
 
 async def getKpiList(channel):
-    await sendMessage(channel,"Enter the number assigned to the KPIs you want to get, separated by commas, or enter \"*\" to get all of them: \n 0-Average group reassignments \n 1-Average number of incidents solved per employee daily \n 2-Average days between Incident opening and closure \n 3-Number of incidents closed \n 4-Number of incidents closed this month \n 5-Number of incidents daily closed this month \n 6-Number of incidents created this month \n 7-Average number of incidents created daily this month \n 8-Number of incidents solved \n 9-Most common Incident priority \n 10-Percentage of critical Incidents \n 11-Percentage of Incidents escalated"+'\n For example: \"1,2,3\"; \"5,2,1,9\"; \"1\";\"*\"')
+    await sendMessage(channel,"Enter the number assigned to the KPIs you want to get, separated by commas, or enter \"\*\" to get all of them: \n 0-Average group reassignments \n 1-Average number of incidents solved per employee daily \n 2-Average days between Incident opening and closure \n 3-Number of incidents closed \n 4-Number of incidents closed this month \n 5-Number of incidents daily closed this month \n 6-Number of incidents created this month \n 7-Average number of incidents created daily this month \n 8-Number of incidents solved \n 9-Most common Incident priority \n 10-Percentage of critical Incidents \n 11-Percentage of Incidents escalated"+'\n For example: *\"1,2,3\"*; *\"5,2,1,9\"*; *\"1\"*;*\"\*\"*')
 
     kpis = await client.wait_for("message")
     while (kpis.channel.id != channel.id) or (kpis.author == client.user) or (not (control.validateKpiList(kpis.content))):
         if(kpis.channel.id == channel.id) and (kpis.author != client.user):
-            await sendMessage(channel,"Kpi list not valid. Must be one or more numbers from 0 to 11, or an asterisk")
+            await sendMessage(channel,"Kpi list not valid. Must be one or more numbers **from 0 to 11, or an asterisk**")
             kpis = await client.wait_for("message")
     return control.getKpis(kpis.content)
 
@@ -348,11 +400,10 @@ async def getKpi(channel):
                 finished = True
 
         except Exception as exception:
-            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
             raise exception
-            print(str(exception))
+            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+        finally:
+             await sendFinishMessage(channel)
 
-async def sendMessage(channel,message):
-    await channel.send(message)
 
 client.run(TOKEN)

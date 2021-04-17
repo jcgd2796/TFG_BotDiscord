@@ -1,7 +1,7 @@
 import json
 
 class Incident:
-    def __init__(self, operator, title, description, ci, impact, severity, incidentID):
+    def __init__(self, operator, title, description, ci, impact, severity, incidentID, phase):
         self.operator = operator
         self.title = title
         self.description = description
@@ -11,6 +11,7 @@ class Incident:
         self.id = incidentID
         self.solution = ""
         self.closureCode = ""
+        self.phase = phase
 
     def setOperator(self,newOperator):
         self.operator = newOperator
@@ -33,10 +34,13 @@ class Incident:
     def setClosureCode(self,newCode):
         self.closureCode = newCode
 
+    def getPhase(self):
+        return self.phase
+
     def toJsonObject(self):
         if self.id == None:
             return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Urgency\": \""+self.severity+"\"}}")
         elif self.id != None and self.solution == "":
             return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Urgency\": \""+self.severity+"\"}}")
         else:
-            return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Status\":\"Closed\",\"Phase\": \"Closure\",\"Urgency\": \""+self.severity+"\",\"Solution\": [\""+self.solution+"\"],\"ClosureCode\":\""+self.closureCode+"\"}}")
+            return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Status\":\"Resolved\",\"Phase\": \"Review\",\"Subcategory\": \"failure\",\"Urgency\": \""+self.severity+"\",\"Solution\": [\""+self.solution+"\"],\"ClosureCode\":\""+self.closureCode+"\"}}")
