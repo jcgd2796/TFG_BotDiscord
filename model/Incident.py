@@ -34,6 +34,9 @@ class Incident:
     def setClosureCode(self,newCode):
         self.closureCode = newCode
 
+    def setPhase(self,newPhase):
+        self.phase = newPhase
+
     def getPhase(self):
         return self.phase
 
@@ -43,4 +46,4 @@ class Incident:
         elif self.id != None and self.solution == "":
             return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Urgency\": \""+self.severity+"\"}}")
         else:
-            return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Status\":\"Resolved\",\"Phase\": \"Review\",\"Subcategory\": \"failure\",\"Urgency\": \""+self.severity+"\",\"Solution\": [\""+self.solution+"\"],\"ClosureCode\":\""+self.closureCode+"\"}}")
+            return json.loads("{\"Incident\": {\"Category\": \"incident\",\"Contact\": \""+self.operator+"\",\"Description\": [\""+self.description+"\"],\"Impact\": \""+self.impact+"\",\"IncidentID\": \""+self.id+"\",\"Service\": \""+self.ci+"\",\"Title\": \""+self.title+"\",\"Status\":\"Resolved\",\"Phase\": \"Review\",\"Area\": \"failure\",\"Urgency\": \""+self.severity+"\",\"Solution\": [\""+self.solution+"\"],\"ClosureCode\":\""+self.closureCode+"\"}}")

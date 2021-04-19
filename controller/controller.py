@@ -61,11 +61,8 @@ def updateIncident(incidentJson):
     return response
 
 def sendClosureToSM(incidentJson):
-    intermediatePhase = copy(incidentJson)
-    intermediatePhase['Incident']['Phase'] = "Categorize"
-    response = requests.put(url+"/incidents/"+incidentJson['Incident']['IncidentID'],data=json.dumps(intermediatePhase),auth=HTTPBasicAuth('bot',os.getenv('BOT_OPERATOR_PASS')))
-    response2 = requests.put(url+"/incidents/"+incidentJson['Incident']['IncidentID'],data=json.dumps(incidentJson),auth=HTTPBasicAuth('bot',os.getenv('BOT_OPERATOR_PASS')))
-    if response.status_code >= 300 or response2.status_code >= 300:
+    response = requests.put(url+"/incidents/"+incidentJson['Incident']['IncidentID'],data=json.dumps(incidentJson),auth=HTTPBasicAuth('bot',os.getenv('BOT_OPERATOR_PASS')))
+    if response.status_code >= 300:
         raise Exception
     return response.json()
 
