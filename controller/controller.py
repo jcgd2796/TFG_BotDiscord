@@ -150,8 +150,8 @@ def getKpis(kpis):
     return kpis
 
 def getLatestKpi(kpiName):
-    response = requests.get(url+'/KPIS/?name='+kpiName,auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
-    latestKpi = response.json()['content'][len(response.json()['content'])-1]['KPI']  #The latest kpi is always the last one in the JsonArray
+    response = requests.get(url+'/KPIS/?name='+kpiName+'&sort=date:descending',auth = HTTPBasicAuth('bot',os.getenv("BOT_OPERATOR_PASS")))
+    latestKpi = response.json()['content'][0]['KPI']  #The latest kpi is always the first one in the JsonArray, as it's sorted
     return Kpi(latestKpi['Name'],latestKpi['Value'],latestKpi['Last_update'])
 
 
