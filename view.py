@@ -201,7 +201,6 @@ async def newIncident(channel):
         msg = '__**Incident ID: '+response['Incident']['IncidentID']+'**__\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']
         await sendMessage(channel,msg)
     except Exception as exception:
-        raise exception
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
     finally:
         await sendFinishMessage(channel)
@@ -221,11 +220,13 @@ async def getIncidentData(channel):
     await sendMessage(channel,"Enter the ID of the incident")
     incId = await client.wait_for("message")
     while (incId.channel.id != channel.id) or (not (control.validateIncident(incId.content))) or (incId.author == client.user):
+        if (incId.content.lower() == '!exit' and channel.id == incId.channel.id):
+            return incId.content.lower()
         if(incId.channel.id == channel.id) and (incId.author != client.user):
             await sendMessage(channel,"Incident ID not valid. Try again")
         incId = await client.wait_for("message")
-        if incId.content.lower() == '!exit':
-            return incId.content.lower()
+    if (incId.content.lower() == '!exit' and channel.id == incId.channel.id):
+        return incId.content.lower()
     return control.getIncidentData(incId.content)
 
 async def getUpdateList(channel):
@@ -300,7 +301,6 @@ async def updateIncident(channel):
             if (finishMessage.content.lower() == 'no'):
                 finished = True
     except Exception as exception:
-        raise exception
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
     finally:
         await sendFinishMessage(channel)
@@ -353,7 +353,6 @@ async def closeIncident(channel):
         msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Status: '+response['Incident']['Status']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
         await sendMessage(channel,msg)
     except Exception as exception:
-        raise exception
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
     finally:
         await sendFinishMessage(channel)
@@ -361,6 +360,8 @@ async def closeIncident(channel):
 async def checkIncident(channel):
     try:
         response = await getIncidentData(channel)
+        if (response == "!exit"):
+            return
         try:
             msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Status: '+response['Incident']['Status']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
             await sendMessage(channel,msg)
@@ -368,10 +369,10 @@ async def checkIncident(channel):
             msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Status: '+response['Incident']['Status']
             await sendMessage(channel,msg)
     except Exception as exception:
-        raise exception
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
     finally:
         await sendFinishMessage(channel)
+        return
 
 async def getKpiList(channel):
     await sendMessage(channel,"Enter the number assigned to the KPIs you want to get, separated by commas, or enter \"\*\" to get all of them: \n 0-Average group reassignments \n 1-Average number of incidents solved per employee daily \n 2-Average days between Incident opening and closure \n 3-Number of incidents closed \n 4-Number of incidents closed this month \n 5-Number of incidents daily closed this month \n 6-Number of incidents created this month \n 7-Average number of incidents created daily this month \n 8-Number of incidents solved \n 9-Most common Incident priority \n 10-Percentage of critical Incidents \n 11-Percentage of Incidents escalated"+'\n For example: *\"1,2,3\"*; *\"5,2,1,9\"*; *\"1\"*;*\"\*\"*')
@@ -404,7 +405,6 @@ async def getKpi(channel):
                 finished = True
 
         except Exception as exception:
-            raise exception
             await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
         finally:
              await sendFinishMessage(channel)
