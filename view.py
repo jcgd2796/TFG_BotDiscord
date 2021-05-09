@@ -23,7 +23,7 @@ async def on_ready():
 #and calls the method, displays help message otherwise.
 @client.event
 async def on_message(message):
-    if(message.author == client.user or message.channel.id != GENERAL_CHANNEL_ID):
+    if(message == None or message.author == client.user or message.channel.id != GENERAL_CHANNEL_ID):
         return
     else:
         #Private channel permissions
@@ -35,7 +35,7 @@ async def on_message(message):
                     await sendMessage(message.channel,"Go to channel "+channel.mention +" to create the incident.")
                     await newIncident(channel)
                 else:
-                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
+                    await sendMessage(message.channel,"Service Manager is not available right now. Try again later")
 
             elif(getCommand(message.content)=="updateIncident"):
                 if control.checkSMAvailability():
@@ -43,7 +43,7 @@ async def on_message(message):
                     await sendMessage(message.channel,"Go to channel "+channel.mention +" to update the incident.")
                     await updateIncident(channel)
                 else:
-                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
+                    await sendMessage(message.channel,"Service Manager is not available right now. Try again later")
 
             elif(getCommand(message.content)=="closeIncident"):
                 if control.checkSMAvailability():
@@ -51,7 +51,7 @@ async def on_message(message):
                     await sendMessage(message.channel,"Go to channel "+channel.mention +" to close the incident.")
                     await closeIncident(channel)
                 else:
-                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
+                    await sendMessage(message.channel,"Service Manager is not available right now. Try again later")
 
             elif(getCommand(message.content)=="checkIncident"):
                 if control.checkSMAvailability():
@@ -59,7 +59,7 @@ async def on_message(message):
                     await sendMessage(message.channel,"Go to channel "+channel.mention +" to get the incident data.")
                     await checkIncident(channel)
                 else:
-                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
+                    await sendMessage(message.channel,"Service Manager is not available right now. Try again later")
             
             elif(getCommand(message.content)=="getKpi"):
                 if control.checkSMAvailability():
@@ -67,7 +67,7 @@ async def on_message(message):
                     await sendMessage(message.channel,"Go to channel "+channel.mention +" to get the desired KPIs.")
                     await getKpi(channel)
                 else:
-                    await sendMessage(channnel,"Service Manager is not available right now. Try again later")
+                    await sendMessage(message.channel,"Service Manager is not available right now. Try again later")
             else: #!help or an invalid command
                 await sendMessage(message.channel,"Avalable actions: \n !help: shows available actions. \n !newIncident: starts the incident creation. \n !updateIncident: modify an incident.\n !closeIncident: Close an incident. \n !checkIncident: get an incident. \n !getKpi: get one or more KPIs (Key Performance Indicator)")
     return
@@ -291,11 +291,11 @@ async def getIncident(channel):
 async def getUpdateList(channel):
     await sendMessage(channel,"Enter the values you want to update, separated by commas. Accepted values are operator, title, description, impact and severity")
     values = await client.wait_for("message")
-    while (values.channel.id != channel.id) or (not (control.validateList(values.content))) or (values.author == client.user):
+    while (values.channel.id != channel.id) or (not (control.validateFieldsList(values.content))) or (values.author == client.user):
         if(values.channel.id == channel.id) and (values.author != client.user):
             await sendMessage(channel,"At least one of the values is not valid, Accepted values are operator, title, description, impact and severity")
         values = await client.wait_for("message")
-    return control.getValuesList(values.content)
+    return control.getFieldValuesList(values.content)
 
 #Get an Incident values, including its status and (if have them) solution and closure code. The communication with the user is done through a Discord channel given as argument.
 async def checkIncident(channel):
@@ -357,6 +357,7 @@ async def closeIncident(channel):
         msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Status: '+response['Incident']['Status']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
         await sendMessage(channel,msg)
     except Exception:
+        raise
         await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
     finally:
         await sendFinishMessage(channel)
@@ -390,8 +391,8 @@ async def getClosureCode(channel):
 async def getKpi(channel):
     finished = False
     #User can request more than one KPI at once using the same channel.
-    while not (finished):
-        try:
+    try:
+        while not (finished):
             kpiList = await getKpiList(channel)
             if '!exit' in kpiList:
                 await sendCancelMessage(channel)
@@ -407,10 +408,10 @@ async def getKpi(channel):
                 finishMessage = await client.wait_for("message")
             if (finishMessage.content.lower() == 'no'):
                 finished = True
-        except Exception:
-            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
-        finally:
-             await sendFinishMessage(channel)
+    except Exception:
+        await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+    finally:
+        await sendFinishMessage(channel)
 
 #Gets the list of KPIs to be obtained from SM server The communication with the user is done through a Discord channel given as argument.  
 async def getKpiList(channel):
@@ -419,7 +420,7 @@ async def getKpiList(channel):
     while (kpis.channel.id != channel.id) or (kpis.author == client.user) or (not (control.validateKpiList(kpis.content))):
         if(kpis.channel.id == channel.id) and (kpis.author != client.user):
             await sendMessage(channel,"Kpi list not valid. Must be one or more numbers **from 0 to 11, or an asterisk**")
-            kpis = await client.wait_for("message")
+        kpis = await client.wait_for("message")
     if "!exit" in kpis.content.lower():
         return "!exit"
     return control.getKpis(kpis.content)
@@ -434,7 +435,7 @@ async def sendCancelMessage(channel):
     await sendMessage(channel,"Operation canceled, no changes performed.")
     return
 
-#Sends a finished process message to the channel passed as argument
+#Sends a finished process message to the channel given as argument
 async def sendFinishMessage(channel):
     await sendMessage(channel,"My job here is done, I won't interact with this channel again. Go to the "+client.get_channel(GENERAL_CHANNEL_ID).mention+" channel to start a new request." )
     return
