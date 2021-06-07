@@ -2,9 +2,11 @@
 Main file of the bot. Acts as the view, connects with the controller and the model.
 Author:
     Juan Carlos Gil Díaz'''
+import sys
+sys.path.append('/home/jcarlos/TFGDiscordBot') # root folder of the project, to enable imports
 import os
 import dotenv
-import controller.controller as control
+import controller.Controller as control
 import discord 
 from dotenv import load_dotenv  #for the environment file, which stores passwords and tokens.
 

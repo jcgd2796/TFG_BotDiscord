@@ -3,6 +3,8 @@ Controller of the bot. Validates the values introduced by the user and communica
 Author:
     Juan Carlos Gil Dïaz'''
 import os
+import sys
+sys.path.append('/home/jcarlos/TFGDiscordBot') # root folder of the project, to enable imports
 import requests #For the http requests to SM REST API
 from requests.auth import HTTPBasicAuth #SM REST API requires authentication
 import dotenv #For the environment file
