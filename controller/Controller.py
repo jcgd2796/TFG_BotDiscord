@@ -72,14 +72,14 @@ Args:
 Exceptions thrown:
     ValueError: if the title is None
 Return:
-    True if the title has more than 10 characters, false otherwise'''
+    True if the title has more than 9 characters, false otherwise'''
 def validateTitle(title):
     if title == None:
         raise ValueError('title is None')
     elif title.lower() == '!exit':
         return True
     else: 
-        return len(title) > 10
+        return len(title) >= 10
 
 '''Validates the Incident CI introduced by the user. A CI is valid if its name is in SM CIs table
 Args:
@@ -430,7 +430,7 @@ def getLatestKpi(kpiName):
     else:
         response = requests.get(URL_KPI+kpiName+'&sort=date:descending',auth = BOT_AUTH)
         latestKpi = response.json()['content'][0]['KPI']  #The latest kpi is always the first one in the JsonArray, as it's sorted
-        if latestKpi.status_code >= 300:
+        if response.status_code >= 300:
             raise Exception ('Unable to connect to SM')
         else:
             return Kpi(latestKpi)

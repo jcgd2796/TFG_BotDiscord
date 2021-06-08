@@ -367,7 +367,7 @@ async def updateIncident(channel):
                 if (finishMessage.content.lower() == 'no'):
                     finished = True
         except Exception:
-            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+            await sendMessage(channel,"There was a problem connecting to Service Manager, or the Incident ID provided doesn't exist. Try again later")
         finally:
             await sendFinishMessage(channel)
             return
@@ -433,7 +433,7 @@ async def checkIncident(channel):
                 msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Status: '+response['Incident']['Status']
                 await sendMessage(channel,msg)
         except Exception:
-            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+            await sendMessage(channel,"There was a problem connecting to Service Manager, or the identifier doesn't belong to any Incident. Try again later")
         finally:
             await sendFinishMessage(channel)
             return
@@ -495,8 +495,7 @@ async def closeIncident(channel):
             msg = 'Incident ID: '+response['Incident']['IncidentID']+'\n'+'Incident Title: '+response['Incident']['Title']+'\n'+'Incident Description: '+response['Incident']['Description'][0]+'\n'+'Incident Impact: '+response['Incident']['Impact']+'\n'+'Incident Severity: '+response['Incident']['Urgency']+'\n'+'Incident Status: '+response['Incident']['Status']+'\n'+'Incident Solution: '+response['Incident']['Solution'][0]+'\n'+'Incident Closure Code: '+response['Incident']['ClosureCode']
             await sendMessage(channel,msg)
         except Exception:
-            raise
-            await sendMessage(channel,"There was a problem connecting to Service Manager. Try again later")
+            await sendMessage(channel,"There was a problem connecting to Service Manager, or the ID of the incident wasn't correct. Try again later")
         finally:
             await sendFinishMessage(channel)
             return
